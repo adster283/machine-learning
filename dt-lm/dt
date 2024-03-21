@@ -99,6 +99,21 @@ def build_tree(train):
     root = get_split(train)
     split(root, 1)
     return root
+
+def predict(node, row):
+    try:
+        if row[node['index']] < node['value']:
+            if isinstance(node['left'], dict):
+                return predict(node['left'], row)
+            else:
+                return node['left']
+        else:
+            if isinstance(node['right'], dict):
+                return predict(node['right'], row)
+            else:
+                return node['right']
+    except:
+        return node['class']
     
     
 def print_tree(node, depth=0):
@@ -106,10 +121,11 @@ def print_tree(node, depth=0):
     count = 0
     if 'data' in node:
         try:
+            test = f"feature {depth+1} ({information_gain(node, node['left']['data'], node['right']['data'])}, Entropy: {entropy([row[-1] for row in node['data']])})"
+            if depth > 0:
+                print((depth * ' ')*3, f"--{depth}== test --")
             print((depth * ' ')*3, f"feature {depth+1} ({information_gain(node, node['left']['data'], node['right']['data'])}, Entropy: {entropy([row[-1] for row in node['data']])})")
             count += 1
-        except:
-            pass
         finally:
             if count == 0:
                 classification = max(set([row[-1] for row in node['data']]), key=[row[-1] for row in node['data']].count)
@@ -117,17 +133,12 @@ def print_tree(node, depth=0):
         if node['left']==node['right']:
             print_tree(node['left'], depth+1)
         else:
-            try:
-                test = print(node['0'])           
                 print_tree(node['left'], depth+1)
-                print_tree(node['right'], depth+1)
-            except:
-                print_tree(node['right'], depth+1)
-                print_tree(node['left'], depth+1) 
+                print_tree(node['right'], depth+1) 
     elif '0' in node:
         print((depth * ' ')*3, "leaf", node['0'], node['1'])
     else:
-        print("sad")
+        print("Something went wrong :()")
     
 def main():
     
@@ -142,7 +153,21 @@ def main():
     tree = build_tree(data_set)
     print("\n")
     print_tree(tree)
+    print("\n")
 
+    actuals = [row[-1] for row in data_set]
+    predicted = []
+
+    for row in data_set:
+        predicted.append(predict(tree, row))
+
+    count = 0
+
+    for i in range(len(predicted)):
+        if predicted[i] == actuals[i]:
+            count += 1
+
+    print(f'Accuracy: {count / len(predicted)}')
 
 if __name__ == '__main__':
     main()
