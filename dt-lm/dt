@@ -15,6 +15,8 @@ def load_csv(file_name):
 
     return data
 
+
+# Calulates the entropy of a given group
 def entropy(group):
     n = len(group)
     if n == 0:
@@ -27,6 +29,8 @@ def entropy(group):
     
     return -p0 * math.log2(p0) - p1 * math.log2(p1)
 
+
+# Calculates the information gain of a given split
 def information_gain(node, left, right):
     parent = entropy([row[-1] for row in node['data']])
     left_entropy = entropy([row[-1] for row in left])
@@ -37,6 +41,8 @@ def information_gain(node, left, right):
     information_gain = parent - ((left_entropy * len(left) / total_instance) + (right_entropy * len(right) / total_instance))
     return information_gain
 
+
+# Splits a given node into a left and right child node
 def split_data(data, index, value):
     left, right = list(), list()
     for row in data:
@@ -46,6 +52,8 @@ def split_data(data, index, value):
             right.append(row)
     return left, right
     
+
+# Determines where to split the data for a given node
 def get_split(data):
     best_index, best_value, best_score, best_groups = 999, 999, 999, None
     for index in range(len(data[0])-1):
@@ -70,7 +78,7 @@ def to_terminal(group):
     group_1 = outcomes.count(1)
     return {'class': max(set(outcomes), key=outcomes.count), '0': group_0, '1': group_1,}
 
-
+# 
 def split(node, depth):
     left, right = node['groups']
     del(node['groups'])
@@ -95,11 +103,15 @@ def split(node, depth):
         node['right'] = get_split(right)
         split(node['right'], depth+1)
         
+
+# Builds the tree by calling the relevant functions
 def build_tree(train):
     root = get_split(train)
     split(root, 1)
     return root
 
+
+# Used to predict the class of a given row a data
 def predict(node, row):
     try:
         if row[node['index']] < node['value']:
@@ -116,6 +128,7 @@ def predict(node, row):
         return node['class']
     
     
+# Prints the tree in an easy to read manner
 def print_tree(node, depth=0):
         
     count = 0
@@ -143,6 +156,7 @@ def print_tree(node, depth=0):
         print("Something went wrong :()")
 
 
+# Prints the tree to the desired txt file
 def print_tree_to_file(node, file_handle, depth=0):
     count = 0
     if 'data' in node:
@@ -171,19 +185,21 @@ def print_tree_to_file(node, file_handle, depth=0):
     
 def main():
     
+    #Handeling the arguments from the terminal
     arguments = sys.argv
     
     train_data = load_csv(arguments[1])
     output_file = arguments[2]
     
+    #Creating the trees
     data_set = [tuple(row) for row in train_data.to_numpy()]
-
 
     tree = build_tree(data_set)
     print("\n")
     print_tree(tree)
     print("\n")
 
+    #Predict and output the tree to the terminal
     actuals = [row[-1] for row in data_set]
     predicted = []
 
@@ -198,8 +214,7 @@ def main():
 
     print(f'Accuracy: {count / len(predicted)}')
 
-
-    # Example usage:
+    # Calling the function to save the tree to the output file
     with open(output_file, "w") as file:
         print_tree_to_file(tree, file)
         file.write(f'\nAccuracy: {count / len(predicted)}')

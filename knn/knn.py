@@ -3,6 +3,9 @@ import sys
 import pandas as pd
 import math
 
+sorted_distances = []
+
+# Allows for only giving the name of the file and not having to give the full path
 def load_csv(file_name):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     csv_file_path = os.path.join(script_dir, f'../Files/data_part1/{file_name}')
@@ -17,8 +20,9 @@ def load_csv(file_name):
     return normalized_data
 
 
+# Normalises the data so we can get better results of the data
 def min_max_normalization(data):
-    data_copy = data.copy()  # Create a copy of the DataFrame
+    data_copy = data.copy()
     min_vals = data_copy.min()
     max_vals = data_copy.max()
     normalized_data = (data_copy - min_vals) / (max_vals - min_vals)
@@ -35,6 +39,8 @@ def create_points_list(data, class_label):
     points_list = [tuple(row) for row in class_data.to_numpy()]
     return points_list
 
+
+# Classifies a point as being inside one of the classes
 def classifyAPoint(points, p, k=3):
     distances = []
     for group_label, group_points in points.items():
@@ -43,6 +49,7 @@ def classifyAPoint(points, p, k=3):
             distances.append((euclidean_distance, group_label))
 
     distances = sorted(distances)[:k]
+    sorted_distances.append(distances)
 
     # Count the frequency of each group in the k nearest neighbors
     frequencies = {}
@@ -55,12 +62,14 @@ def classifyAPoint(points, p, k=3):
     # Return the group with the highest frequency
     return max(frequencies, key=frequencies.get)
 
+
 def main():
     arguments = sys.argv
 
     # Loading in the files
     train_file = load_csv(arguments[1])
     test_file = load_csv(arguments[2])
+    output_file = arguments[3]
 
     # Creating the lists of training points for each class
     class1 = create_points_list(train_file, 1)
@@ -74,7 +83,7 @@ def main():
     test_points = [tuple(row) for row in test_file.to_numpy()]
 
     # Setting up the k value
-    k = int(arguments[3])
+    k = int(arguments[4])
 
     # Classifying test points
     list_of_classifications = []
@@ -94,6 +103,19 @@ def main():
     print(f'Accuracy: {count / len(list_of_classifications)}')
 
     # Creating the output file
+    # Create headings for distances
+    distance_headings = ['Distance' + str(i + 1) for i in range(k)]
+
+    # Export results to output file
+    my_df = {'Y': pd.Series(test_file['class']),
+             'Predictions': pd.Series(list_of_classifications)}
+    
+    # Add distance columns
+    for i in range(k):
+        my_df[distance_headings[i]] = pd.Series([distances[i] if len(distances) > i else np.nan for distances in sorted_distances])
+
+    df = pd.DataFrame(my_df)
+    df.to_csv(output_file, index=False)
 
 
 if __name__ == '__main__':
