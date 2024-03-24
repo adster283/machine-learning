@@ -126,6 +126,8 @@ def print_tree(node, depth=0):
                 print((depth * ' ')*3, f"--{depth}== test --")
             print((depth * ' ')*3, f"feature {depth+1} ({information_gain(node, node['left']['data'], node['right']['data'])}, Entropy: {entropy([row[-1] for row in node['data']])})")
             count += 1
+        except:
+            pass
         finally:
             if count == 0:
                 classification = max(set([row[-1] for row in node['data']]), key=[row[-1] for row in node['data']].count)
