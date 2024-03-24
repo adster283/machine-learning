@@ -141,6 +141,33 @@ def print_tree(node, depth=0):
         print((depth * ' ')*3, "leaf", node['0'], node['1'])
     else:
         print("Something went wrong :()")
+
+
+def print_tree_to_file(node, file_handle, depth=0):
+    count = 0
+    if 'data' in node:
+        try:
+            test = f"feature {depth+1} ({information_gain(node, node['left']['data'], node['right']['data'])}, Entropy: {entropy([row[-1] for row in node['data']])})"
+            if depth > 0:
+                file_handle.write((depth * ' ')*3 + f"--{depth}== test --\n")
+            file_handle.write((depth * ' ')*3 + f"feature {depth+1} ({information_gain(node, node['left']['data'], node['right']['data'])}, Entropy: {entropy([row[-1] for row in node['data']])})\n")
+            count += 1
+        except:
+            pass
+        finally:
+            if count == 0:
+                classification = max(set([row[-1] for row in node['data']]), key=[row[-1] for row in node['data']].count)
+                file_handle.write((depth * ' ')*3 + f"--{depth}== {classification} --\n")
+        if node['left']==node['right']:
+            print_tree_to_file(node['left'], file_handle, depth+1)
+        else:
+            print_tree_to_file(node['left'], file_handle, depth+1)
+            print_tree_to_file(node['right'], file_handle, depth+1)
+    elif '0' in node:
+        file_handle.write((depth * ' ')*3 + f"leaf {node['0']} {node['1']}\n")
+    else:
+        file_handle.write("Something went wrong :(\n")
+
     
 def main():
     
@@ -170,6 +197,13 @@ def main():
             count += 1
 
     print(f'Accuracy: {count / len(predicted)}')
+
+
+    # Example usage:
+    with open(output_file, "w") as file:
+        print_tree_to_file(tree, file)
+        file.write(f'\nAccuracy: {count / len(predicted)}')
+
 
 if __name__ == '__main__':
     main()
